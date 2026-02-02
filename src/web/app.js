@@ -1,13 +1,20 @@
 // Configuration
 const CONFIG = {
-    // Production API URL for deployed Azure Functions
+    // Try multiple API endpoints in order of preference
+    API_ENDPOINTS: [
+        // Azure Static Web Apps integrated API (preferred)
+        '/api/nextbirthday',
+        // Fallback to external Azure Functions if integrated API fails
+        'https://funchttptrigger1-fvbnfye7bac5bgd5.eastus-01.azurewebsites.net/api/nextbirthday'
+    ],
+    // Current API URL (will be set dynamically)
     API_BASE_URL: window.location.hostname.includes('localhost') 
         ? 'http://localhost:8000/api/nextbirthday'  // Local development
-        : 'https://funchttptrigger1-fvbnfye7bac5bgd5.eastus-01.azurewebsites.net/api/nextbirthday'  // Production
+        : '/api/nextbirthday'  // Use integrated API for Azure Static Web Apps
 };
 
 // Deployment info for debugging
-console.log('🎂 Birthday Countdown App v2.1 - Deployed:', new Date().toISOString());
+console.log('🎂 Birthday Countdown App v2.2 - API Integration Fix:', new Date().toISOString());
 console.log('🌍 Environment:', window.location.hostname.includes('localhost') ? 'LOCAL' : 'AZURE');
 console.log('🔗 API URL:', CONFIG.API_BASE_URL);
 
@@ -158,9 +165,41 @@ function validateInput(dob) {
     return true;
 }
 
-// Call the birthday API
+// Call the birthday API with fallback support
 async function callBirthdayAPI(dob) {
-    const url = `${CONFIG.API_BASE_URL}?dob=${encodeURIComponent(dob)}`;
+    let lastError = null;
+    
+    // For localhost, use the configured URL directly
+    if (window.location.hostname.includes('localhost')) {
+        return await makeAPIRequest(CONFIG.API_BASE_URL, dob);
+    }
+    
+    // For production, try multiple endpoints
+    const endpoints = [
+        '/api/nextbirthday',  // Integrated API (preferred)
+        'https://funchttptrigger1-fvbnfye7bac5bgd5.eastus-01.azurewebsites.net/api/nextbirthday'  // External Functions
+    ];
+    
+    for (const endpoint of endpoints) {
+        try {
+            console.log(`🔄 Trying API endpoint: ${endpoint}`);
+            const result = await makeAPIRequest(endpoint, dob);
+            console.log(`✅ Success with endpoint: ${endpoint}`);
+            return result;
+        } catch (error) {
+            console.log(`❌ Failed with endpoint ${endpoint}:`, error.message);
+            lastError = error;
+            continue;
+        }
+    }
+    
+    // If all endpoints failed, throw the last error
+    throw lastError || new Error('All API endpoints failed');
+}
+
+// Make API request to a specific endpoint
+async function makeAPIRequest(baseUrl, dob) {
+    const url = `${baseUrl}?dob=${encodeURIComponent(dob)}`;
     
     try {
         const response = await fetch(url, {
