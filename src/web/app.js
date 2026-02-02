@@ -1,9 +1,9 @@
 // Configuration
 const CONFIG = {
-    // Smart API URL detection for different environments
+    // Production API URL for deployed Azure Functions
     API_BASE_URL: window.location.hostname.includes('localhost') 
         ? 'http://localhost:8000/api/nextbirthday'  // Local development
-        : '/api/nextbirthday'  // Production (Static Web Apps with API integration)
+        : 'https://funchttptrigger1-fvbnfye7bac5bgd5.eastus-01.azurewebsites.net/api/nextbirthday'  // Production
 };
 
 // DOM elements
