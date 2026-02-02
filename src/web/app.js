@@ -6,6 +6,9 @@ const CONFIG = {
         : 'https://funchttptrigger1-fvbnfye7bac5bgd5.eastus-01.azurewebsites.net/api/nextbirthday'  // Production
 };
 
+// Deployment info for debugging
+console.log('🎂 Birthday Countdown App v2.0 - Deployed:', new Date().toISOString());
+
 // DOM elements
 const elements = {
     form: document.getElementById('birthdayForm'),
