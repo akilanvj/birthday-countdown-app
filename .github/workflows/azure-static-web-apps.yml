@@ -27,17 +27,31 @@ jobs:
           echo "Contents of src/web:"
           ls -la src/web/ || echo "src/web directory not found"
       
+      - name: Check for deployment token
+        run: |
+          if [ -z "${{ secrets.AZURE_STATIC_WEB_APPS_API_TOKEN_VICTORIOUS_SMOKE_BC9950CF }}" ]; then
+            echo "❌ AZURE_STATIC_WEB_APPS_API_TOKEN_VICTORIOUS_SMOKE_BC9950CF secret is missing!"
+            echo "Please add the deployment token to GitHub Secrets:"
+            echo "1. Go to Azure Portal → Your Static Web App → Manage deployment token"
+            echo "2. Copy the token"
+            echo "3. Go to GitHub → Settings → Secrets → Add AZURE_STATIC_WEB_APPS_API_TOKEN_VICTORIOUS_SMOKE_BC9950CF"
+            exit 1
+          else
+            echo "✅ Deployment token found, proceeding with deployment"
+          fi
+      
       - name: Build And Deploy
         id: builddeploy
         uses: Azure/static-web-apps-deploy@v1
         with:
-          azure_static_web_apps_api_token: ${{ secrets.AZURE_STATIC_WEB_APPS_API_TOKEN }}
+          azure_static_web_apps_api_token: ${{ secrets.AZURE_STATIC_WEB_APPS_API_TOKEN_VICTORIOUS_SMOKE_BC9950CF }}
           repo_token: ${{ secrets.GITHUB_TOKEN }}
           action: "upload"
           app_location: "src/web"
           api_location: ""
           output_location: "."
           skip_app_build: true
+          skip_deploy_on_missing_secrets: true
 
   close_pull_request_job:
     if: github.event_name == 'pull_request' && github.event.action == 'closed'
@@ -48,5 +62,5 @@ jobs:
         id: closepullrequest
         uses: Azure/static-web-apps-deploy@v1
         with:
-          azure_static_web_apps_api_token: ${{ secrets.AZURE_STATIC_WEB_APPS_API_TOKEN }}
+          azure_static_web_apps_api_token: ${{ secrets.AZURE_STATIC_WEB_APPS_API_TOKEN_VICTORIOUS_SMOKE_BC9950CF }}
           action: "close"
