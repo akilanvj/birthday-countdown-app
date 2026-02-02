@@ -33,6 +33,12 @@ function init() {
     elements.form.addEventListener('submit', handleFormSubmit);
     elements.dobInput.addEventListener('input', clearError);
     
+    // Ensure date input works properly
+    elements.dobInput.addEventListener('focus', function() {
+        // Force the date picker to show
+        this.showPicker && this.showPicker();
+    });
+    
     console.log('Next Birthday Countdown app initialized');
 }
 
@@ -51,8 +57,11 @@ async function handleFormSubmit(event) {
     showLoading();
     
     try {
+        // Use the formatted date for API call
+        const formattedDate = elements.dobInput.dataset.formattedDate || dob;
+        
         // Make API call
-        const result = await callBirthdayAPI(dob);
+        const result = await callBirthdayAPI(formattedDate);
         
         // Display results
         displayResults(result);
@@ -76,28 +85,49 @@ function validateInput(dob) {
         return false;
     }
     
-    // Ensure date is in YYYY-MM-DD format for API
+    // Convert DD/MM/YYYY to YYYY-MM-DD format for API
     let formattedDate = dob;
     
-    // If user entered MM/DD/YYYY or DD/MM/YYYY, try to convert
+    // Handle different date formats
     if (dob.includes('/')) {
         const parts = dob.split('/');
         if (parts.length === 3) {
-            // Assume MM/DD/YYYY format
-            const month = parts[0].padStart(2, '0');
-            const day = parts[1].padStart(2, '0');
+            // Assume DD/MM/YYYY format (European style)
+            const day = parts[0].padStart(2, '0');
+            const month = parts[1].padStart(2, '0');
             const year = parts[2];
-            formattedDate = `${year}-${month}-${day}`;
+            
+            // Validate year length
+            if (year.length === 2) {
+                // Convert 2-digit year to 4-digit (assume 1900s for years > 50, 2000s for years <= 50)
+                const currentYear = new Date().getFullYear();
+                const century = parseInt(year) > 50 ? 1900 : 2000;
+                formattedDate = `${century + parseInt(year)}-${month}-${day}`;
+            } else if (year.length === 4) {
+                formattedDate = `${year}-${month}-${day}`;
+            } else {
+                displayError('Please enter a valid year (YYYY or YY format).');
+                return false;
+            }
+        } else {
+            displayError('Please enter date in DD/MM/YYYY format.');
+            return false;
         }
+    } else if (dob.includes('-')) {
+        // Already in YYYY-MM-DD format, keep as is
+        formattedDate = dob;
+    } else {
+        displayError('Please enter date in DD/MM/YYYY format or use the date picker.');
+        return false;
     }
     
-    // Check date format and validity
+    // Validate the formatted date
     const dobDate = new Date(formattedDate);
     const today = new Date();
     
     // Check if date is valid
     if (isNaN(dobDate.getTime())) {
-        displayError('Please enter a valid date in YYYY-MM-DD format (e.g., 2000-06-12).');
+        displayError('Please enter a valid date. Use DD/MM/YYYY format (e.g., 12/06/2000).');
         return false;
     }
     
@@ -117,8 +147,8 @@ function validateInput(dob) {
         return false;
     }
     
-    // Update the input field with the formatted date
-    elements.dobInput.value = formattedDate;
+    // Store the formatted date for API call
+    elements.dobInput.dataset.formattedDate = formattedDate;
     
     return true;
 }

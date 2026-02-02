@@ -14,15 +14,16 @@
             
             <form id="birthdayForm" class="form">
                 <div class="input-group">
-                    <label for="dob">Date of Birth:</label>
+                    <label for="dob">Date of Birth (DD/MM/YYYY):</label>
                     <input 
                         type="date" 
                         id="dob" 
                         name="dob" 
                         required
-                        max=""
                         class="date-input"
+                        placeholder="DD/MM/YYYY"
                     >
+                    <small class="input-help">Use the date picker or enter DD/MM/YYYY format</small>
                 </div>
                 
                 <button type="submit" class="calculate-btn">
