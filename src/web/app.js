@@ -76,13 +76,28 @@ function validateInput(dob) {
         return false;
     }
     
-    // Check date format (basic validation - browser handles most of this)
-    const dobDate = new Date(dob);
+    // Ensure date is in YYYY-MM-DD format for API
+    let formattedDate = dob;
+    
+    // If user entered MM/DD/YYYY or DD/MM/YYYY, try to convert
+    if (dob.includes('/')) {
+        const parts = dob.split('/');
+        if (parts.length === 3) {
+            // Assume MM/DD/YYYY format
+            const month = parts[0].padStart(2, '0');
+            const day = parts[1].padStart(2, '0');
+            const year = parts[2];
+            formattedDate = `${year}-${month}-${day}`;
+        }
+    }
+    
+    // Check date format and validity
+    const dobDate = new Date(formattedDate);
     const today = new Date();
     
     // Check if date is valid
     if (isNaN(dobDate.getTime())) {
-        displayError('Please enter a valid date.');
+        displayError('Please enter a valid date in YYYY-MM-DD format (e.g., 2000-06-12).');
         return false;
     }
     
@@ -101,6 +116,9 @@ function validateInput(dob) {
         displayError('Please enter a more recent date of birth.');
         return false;
     }
+    
+    // Update the input field with the formatted date
+    elements.dobInput.value = formattedDate;
     
     return true;
 }
