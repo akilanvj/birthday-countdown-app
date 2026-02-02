@@ -1,0 +1,624 @@
+/* Reset and base styles */
+* {
+    margin: 0;
+    padding: 0;
+    box-sizing: border-box;
+}
+
+body {
+    font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Oxygen, Ubuntu, Cantarell, sans-serif;
+    background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+    background-attachment: fixed;
+    min-height: 100vh;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    padding: 20px;
+    line-height: 1.6;
+    color: #333;
+}
+
+/* Container and card layout */
+.container {
+    width: 100%;
+    max-width: 500px;
+    margin: 0 auto;
+}
+
+.card {
+    background: white;
+    border-radius: 20px;
+    box-shadow: 0 20px 40px rgba(0, 0, 0, 0.1), 0 8px 16px rgba(0, 0, 0, 0.05);
+    padding: 40px;
+    text-align: center;
+    transition: all 0.3s ease;
+    backdrop-filter: blur(10px);
+    border: 1px solid rgba(255, 255, 255, 0.2);
+    position: relative;
+    overflow: hidden;
+}
+
+.card::before {
+    content: '';
+    position: absolute;
+    top: 0;
+    left: 0;
+    right: 0;
+    height: 4px;
+    background: linear-gradient(90deg, #667eea 0%, #764ba2 100%);
+}
+
+.card:hover {
+    transform: translateY(-4px);
+    box-shadow: 0 30px 60px rgba(0, 0, 0, 0.15), 0 12px 24px rgba(0, 0, 0, 0.08);
+}
+
+/* Typography */
+h1 {
+    color: #2d3748;
+    font-size: 2.4rem;
+    margin-bottom: 8px;
+    font-weight: 700;
+    background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+    -webkit-background-clip: text;
+    -webkit-text-fill-color: transparent;
+    background-clip: text;
+    text-shadow: none;
+}
+
+.subtitle {
+    color: #718096;
+    font-size: 1.1rem;
+    margin-bottom: 32px;
+    font-weight: 400;
+}
+
+h2 {
+    color: #2d3748;
+    font-size: 1.6rem;
+    margin-bottom: 24px;
+    font-weight: 600;
+}
+
+/* Form styles */
+.form {
+    margin-bottom: 32px;
+}
+
+.input-group {
+    margin-bottom: 24px;
+    text-align: left;
+    position: relative;
+}
+
+.input-group label {
+    display: block;
+    margin-bottom: 8px;
+    color: #4a5568;
+    font-weight: 500;
+    font-size: 1rem;
+    transition: color 0.2s ease;
+}
+
+.date-input {
+    width: 100%;
+    padding: 14px 16px;
+    border: 2px solid #e2e8f0;
+    border-radius: 12px;
+    font-size: 1rem;
+    transition: all 0.3s ease;
+    background: #fafafa;
+    color: #2d3748;
+    font-family: inherit;
+}
+
+.date-input:focus {
+    outline: none;
+    border-color: #667eea;
+    box-shadow: 0 0 0 3px rgba(102, 126, 234, 0.1);
+    background: white;
+    transform: translateY(-1px);
+}
+
+.date-input:hover:not(:focus) {
+    border-color: #cbd5e0;
+    background: white;
+}
+
+.date-input:invalid {
+    border-color: #e53e3e;
+    box-shadow: 0 0 0 3px rgba(229, 62, 62, 0.1);
+}
+
+.date-input.error {
+    border-color: #e53e3e;
+    background: #fef5f5;
+    animation: shake 0.5s ease-in-out;
+}
+
+@keyframes shake {
+    0%, 100% { transform: translateX(0); }
+    25% { transform: translateX(-4px); }
+    75% { transform: translateX(4px); }
+}
+
+/* Button styles */
+.calculate-btn {
+    background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+    color: white;
+    border: none;
+    padding: 16px 32px;
+    border-radius: 12px;
+    font-size: 1.1rem;
+    font-weight: 600;
+    cursor: pointer;
+    transition: all 0.3s ease;
+    width: 100%;
+    position: relative;
+    overflow: hidden;
+    text-transform: none;
+    letter-spacing: 0.5px;
+}
+
+.calculate-btn::before {
+    content: '';
+    position: absolute;
+    top: 0;
+    left: -100%;
+    width: 100%;
+    height: 100%;
+    background: linear-gradient(90deg, transparent, rgba(255, 255, 255, 0.2), transparent);
+    transition: left 0.5s ease;
+}
+
+.calculate-btn:hover::before {
+    left: 100%;
+}
+
+.calculate-btn:hover {
+    transform: translateY(-2px);
+    box-shadow: 0 12px 24px rgba(102, 126, 234, 0.3);
+}
+
+.calculate-btn:active {
+    transform: translateY(0);
+    transition: transform 0.1s ease;
+}
+
+.calculate-btn:disabled {
+    opacity: 0.7;
+    cursor: not-allowed;
+    transform: none;
+    box-shadow: none;
+    background: #a0aec0;
+}
+
+.calculate-btn:disabled::before {
+    display: none;
+}
+
+/* Results display */
+.results {
+    text-align: left;
+    background: linear-gradient(135deg, #f7fafc 0%, #edf2f7 100%);
+    border-radius: 16px;
+    padding: 28px;
+    margin-top: 24px;
+    border: 1px solid #e2e8f0;
+    animation: slideIn 0.5s ease-out;
+    position: relative;
+}
+
+.results::before {
+    content: '🎉';
+    position: absolute;
+    top: -10px;
+    right: 20px;
+    font-size: 2rem;
+    animation: bounce 2s infinite;
+}
+
+@keyframes slideIn {
+    from {
+        opacity: 0;
+        transform: translateY(20px);
+    }
+    to {
+        opacity: 1;
+        transform: translateY(0);
+    }
+}
+
+@keyframes bounce {
+    0%, 20%, 50%, 80%, 100% {
+        transform: translateY(0);
+    }
+    40% {
+        transform: translateY(-10px);
+    }
+    60% {
+        transform: translateY(-5px);
+    }
+}
+
+.result-grid {
+    display: grid;
+    gap: 18px;
+    margin-bottom: 24px;
+}
+
+.result-item {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    padding: 16px 0;
+    border-bottom: 1px solid #e2e8f0;
+    transition: all 0.2s ease;
+}
+
+.result-item:last-child {
+    border-bottom: none;
+}
+
+.result-item:hover {
+    background: rgba(102, 126, 234, 0.05);
+    margin: 0 -16px;
+    padding: 16px;
+    border-radius: 8px;
+}
+
+.result-item label {
+    color: #4a5568;
+    font-weight: 500;
+    margin: 0;
+    font-size: 0.95rem;
+}
+
+.result-value {
+    color: #2d3748;
+    font-weight: 600;
+    font-size: 1.1rem;
+    background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+    -webkit-background-clip: text;
+    -webkit-text-fill-color: transparent;
+    background-clip: text;
+}
+
+.birthday-message {
+    background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+    color: white;
+    padding: 20px;
+    border-radius: 12px;
+    font-size: 1.1rem;
+    font-weight: 500;
+    text-align: center;
+    box-shadow: 0 4px 12px rgba(102, 126, 234, 0.3);
+    position: relative;
+    overflow: hidden;
+}
+
+.birthday-message::before {
+    content: '';
+    position: absolute;
+    top: -50%;
+    left: -50%;
+    width: 200%;
+    height: 200%;
+    background: radial-gradient(circle, rgba(255, 255, 255, 0.1) 0%, transparent 70%);
+    animation: shimmer 3s ease-in-out infinite;
+}
+
+@keyframes shimmer {
+    0% {
+        transform: rotate(0deg);
+    }
+    100% {
+        transform: rotate(360deg);
+    }
+}
+
+/* Error message styles */
+.error-message {
+    background: linear-gradient(135deg, #fed7d7 0%, #feb2b2 100%);
+    color: #c53030;
+    padding: 18px;
+    border-radius: 12px;
+    border: 1px solid #fc8181;
+    margin-top: 16px;
+    text-align: left;
+    animation: errorSlideIn 0.3s ease-out;
+    position: relative;
+    box-shadow: 0 4px 12px rgba(197, 48, 48, 0.15);
+}
+
+.error-message::before {
+    content: '⚠️';
+    position: absolute;
+    top: 18px;
+    left: 18px;
+    font-size: 1.2rem;
+}
+
+.error-message {
+    padding-left: 50px;
+}
+
+@keyframes errorSlideIn {
+    from {
+        opacity: 0;
+        transform: translateX(-20px);
+    }
+    to {
+        opacity: 1;
+        transform: translateX(0);
+    }
+}
+
+.error-message.show {
+    display: block;
+}
+
+/* Success state for form */
+.form.success .date-input {
+    border-color: #38a169;
+    background: #f0fff4;
+    box-shadow: 0 0 0 3px rgba(56, 161, 105, 0.1);
+}
+
+.form.success .input-group label {
+    color: #38a169;
+}
+
+/* Loading spinner */
+.loading {
+    text-align: center;
+    padding: 40px;
+    animation: fadeIn 0.3s ease-out;
+}
+
+@keyframes fadeIn {
+    from {
+        opacity: 0;
+    }
+    to {
+        opacity: 1;
+    }
+}
+
+.spinner {
+    width: 48px;
+    height: 48px;
+    border: 4px solid #e2e8f0;
+    border-top: 4px solid #667eea;
+    border-radius: 50%;
+    animation: spin 1s linear infinite;
+    margin: 0 auto 20px;
+    position: relative;
+}
+
+.spinner::after {
+    content: '';
+    position: absolute;
+    top: 2px;
+    left: 2px;
+    right: 2px;
+    bottom: 2px;
+    border: 2px solid transparent;
+    border-top: 2px solid #764ba2;
+    border-radius: 50%;
+    animation: spin 1.5s linear infinite reverse;
+}
+
+@keyframes spin {
+    0% { transform: rotate(0deg); }
+    100% { transform: rotate(360deg); }
+}
+
+.loading p {
+    color: #4a5568;
+    font-size: 1rem;
+    font-weight: 500;
+}
+
+/* Utility classes */
+.hidden {
+    display: none;
+}
+
+.show {
+    display: block;
+}
+
+/* Responsive design */
+@media (max-width: 768px) {
+    body {
+        padding: 16px;
+    }
+    
+    .card {
+        padding: 32px 24px;
+        border-radius: 16px;
+    }
+    
+    h1 {
+        font-size: 2rem;
+    }
+    
+    .subtitle {
+        font-size: 1rem;
+        margin-bottom: 28px;
+    }
+    
+    .date-input {
+        padding: 12px 14px;
+        font-size: 16px; /* Prevents zoom on iOS */
+    }
+    
+    .calculate-btn {
+        padding: 14px 24px;
+        font-size: 1rem;
+    }
+    
+    .results {
+        padding: 24px 20px;
+    }
+    
+    .result-item {
+        flex-direction: column;
+        align-items: flex-start;
+        gap: 6px;
+        padding: 14px 0;
+    }
+    
+    .result-item:hover {
+        margin: 0 -12px;
+        padding: 14px 12px;
+    }
+    
+    .result-value {
+        font-size: 1rem;
+        align-self: flex-end;
+    }
+    
+    .birthday-message {
+        font-size: 1rem;
+        padding: 18px;
+    }
+}
+
+@media (max-width: 480px) {
+    body {
+        padding: 12px;
+    }
+    
+    .card {
+        padding: 24px 20px;
+        border-radius: 12px;
+    }
+    
+    h1 {
+        font-size: 1.8rem;
+        margin-bottom: 6px;
+    }
+    
+    .subtitle {
+        font-size: 0.95rem;
+        margin-bottom: 24px;
+    }
+    
+    .input-group {
+        margin-bottom: 20px;
+    }
+    
+    .date-input {
+        padding: 12px;
+        border-radius: 8px;
+    }
+    
+    .calculate-btn {
+        padding: 12px 20px;
+        border-radius: 8px;
+        font-size: 0.95rem;
+    }
+    
+    .results {
+        padding: 20px 16px;
+        border-radius: 12px;
+    }
+    
+    .results::before {
+        font-size: 1.5rem;
+        top: -8px;
+        right: 16px;
+    }
+    
+    .result-item {
+        padding: 12px 0;
+    }
+    
+    .result-item:hover {
+        margin: 0 -8px;
+        padding: 12px 8px;
+    }
+    
+    .birthday-message {
+        font-size: 0.95rem;
+        padding: 16px;
+        border-radius: 8px;
+    }
+    
+    .error-message {
+        padding: 16px;
+        padding-left: 44px;
+        border-radius: 8px;
+    }
+    
+    .error-message::before {
+        font-size: 1rem;
+        top: 16px;
+        left: 16px;
+    }
+}
+
+@media (max-width: 360px) {
+    .card {
+        padding: 20px 16px;
+    }
+    
+    h1 {
+        font-size: 1.6rem;
+    }
+    
+    .subtitle {
+        font-size: 0.9rem;
+    }
+    
+    .results {
+        padding: 18px 14px;
+    }
+    
+    .birthday-message {
+        font-size: 0.9rem;
+        padding: 14px;
+    }
+}
+
+/* High contrast mode support */
+@media (prefers-contrast: high) {
+    .card {
+        border: 2px solid #2d3748;
+    }
+    
+    .date-input {
+        border-width: 3px;
+    }
+    
+    .calculate-btn {
+        border: 2px solid #2d3748;
+    }
+    
+    .error-message {
+        border-width: 2px;
+    }
+}
+
+/* Reduced motion support */
+@media (prefers-reduced-motion: reduce) {
+    * {
+        animation-duration: 0.01ms !important;
+        animation-iteration-count: 1 !important;
+        transition-duration: 0.01ms !important;
+    }
+    
+    .card:hover {
+        transform: none;
+    }
+    
+    .calculate-btn:hover {
+        transform: none;
+    }
+    
+    .date-input:focus {
+        transform: none;
+    }
+}

@@ -1,0 +1,20 @@
+{
+  "environment": "production",
+  "api": {
+    "baseUrl": "https://your-function-app.azurewebsites.net/api",
+    "timeout": 10000,
+    "retries": 3
+  },
+  "server": {
+    "port": 80,
+    "host": "0.0.0.0",
+    "cors": {
+      "enabled": true,
+      "origins": ["https://your-static-web-app.azurestaticapps.net"]
+    }
+  },
+  "logging": {
+    "level": "info",
+    "format": "json"
+  }
+}

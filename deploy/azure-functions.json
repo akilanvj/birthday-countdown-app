@@ -1,0 +1,17 @@
+{
+  "name": "birthday-countdown-api",
+  "description": "Azure Functions deployment configuration for Birthday Countdown API",
+  "runtime": "python",
+  "version": "3.9",
+  "source": "src/api",
+  "entry_point": "function_app.py",
+  "requirements": "requirements.txt",
+  "settings": {
+    "FUNCTIONS_WORKER_RUNTIME": "python",
+    "AzureWebJobsFeatureFlags": "EnableWorkerIndexing"
+  },
+  "cors": {
+    "allowedOrigins": ["*"],
+    "allowCredentials": false
+  }
+}

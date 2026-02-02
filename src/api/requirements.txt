@@ -1,0 +1,5 @@
+# Azure Functions for Python
+azure-functions>=1.18.0,<2.0.0
+
+# Additional dependencies will be added as needed in subsequent tasks
+# Preferring standard library dependencies where possible per requirements

@@ -1,0 +1,72 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Next Birthday Countdown</title>
+    <link rel="stylesheet" href="styles.css">
+</head>
+<body>
+    <div class="container">
+        <div class="card">
+            <h1>🎂 Next Birthday Countdown</h1>
+            <p class="subtitle">Find out when your next birthday is!</p>
+            
+            <form id="birthdayForm" class="form">
+                <div class="input-group">
+                    <label for="dob">Date of Birth:</label>
+                    <input 
+                        type="date" 
+                        id="dob" 
+                        name="dob" 
+                        required
+                        max=""
+                        class="date-input"
+                    >
+                </div>
+                
+                <button type="submit" class="calculate-btn">
+                    Calculate Next Birthday
+                </button>
+            </form>
+            
+            <div id="errorMessage" class="error-message hidden"></div>
+            
+            <div id="results" class="results hidden">
+                <h2>Your Birthday Information</h2>
+                
+                <div class="result-grid">
+                    <div class="result-item">
+                        <label>Current Age:</label>
+                        <span id="ageYears" class="result-value"></span>
+                    </div>
+                    
+                    <div class="result-item">
+                        <label>Next Birthday Date:</label>
+                        <span id="nextBirthdayDate" class="result-value"></span>
+                    </div>
+                    
+                    <div class="result-item">
+                        <label>Day of Week:</label>
+                        <span id="nextBirthdayDayOfWeek" class="result-value"></span>
+                    </div>
+                    
+                    <div class="result-item">
+                        <label>Days Until Birthday:</label>
+                        <span id="daysUntilNextBirthday" class="result-value"></span>
+                    </div>
+                </div>
+                
+                <div id="message" class="birthday-message"></div>
+            </div>
+            
+            <div class="loading hidden" id="loading">
+                <div class="spinner"></div>
+                <p>Calculating your next birthday...</p>
+            </div>
+        </div>
+    </div>
+    
+    <script src="app.js"></script>
+</body>
+</html>

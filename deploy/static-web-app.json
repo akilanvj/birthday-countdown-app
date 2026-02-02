@@ -1,0 +1,18 @@
+{
+  "name": "birthday-countdown-web",
+  "description": "Azure Static Web Apps deployment configuration for Birthday Countdown frontend",
+  "source": "src/web",
+  "build": {
+    "commands": [],
+    "outputLocation": "."
+  },
+  "routes": [
+    {
+      "route": "/api/*",
+      "allowedRoles": ["anonymous"]
+    }
+  ],
+  "navigationFallback": {
+    "rewrite": "/index.html"
+  }
+}
