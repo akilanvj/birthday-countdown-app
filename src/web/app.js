@@ -7,7 +7,9 @@ const CONFIG = {
 };
 
 // Deployment info for debugging
-console.log('🎂 Birthday Countdown App v2.0 - Deployed:', new Date().toISOString());
+console.log('🎂 Birthday Countdown App v2.1 - Deployed:', new Date().toISOString());
+console.log('🌍 Environment:', window.location.hostname.includes('localhost') ? 'LOCAL' : 'AZURE');
+console.log('🔗 API URL:', CONFIG.API_BASE_URL);
 
 // DOM elements
 const elements = {
