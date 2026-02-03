@@ -46,7 +46,7 @@ const CONFIG = {
 };
 
 // Deployment info for debugging
-logInfo('Birthday Countdown App v2.3 - Enhanced Logging:', new Date().toISOString());
+logInfo('Birthday Countdown App v2.4 - CI/CD Test & Application Insights Ready:', new Date().toISOString());
 logInfo('Environment:', window.location.hostname.includes('localhost') ? 'LOCAL' : 'AZURE');
 logInfo('Hostname:', window.location.hostname);
 logInfo('Full URL:', window.location.href);
