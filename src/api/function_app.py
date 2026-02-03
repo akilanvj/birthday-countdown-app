@@ -5,9 +5,44 @@ from datetime import datetime, date, timedelta
 import re
 import os
 
+# Application Insights integration
+try:
+    from applicationinsights import TelemetryClient
+    from opencensus.ext.azure.log_exporter import AzureLogHandler
+    
+    # Get Application Insights connection string from environment
+    connection_string = os.environ.get('APPLICATIONINSIGHTS_CONNECTION_STRING')
+    instrumentation_key = os.environ.get('APPINSIGHTS_INSTRUMENTATIONKEY')
+    
+    if connection_string or instrumentation_key:
+        # Configure Application Insights logging
+        if connection_string:
+            logger = logging.getLogger(__name__)
+            logger.addHandler(AzureLogHandler(connection_string=connection_string))
+            logger.setLevel(logging.INFO)
+            
+            # Create telemetry client for custom events
+            tc = TelemetryClient(instrumentation_key=instrumentation_key or connection_string.split('InstrumentationKey=')[1].split(';')[0])
+        else:
+            logger = logging.getLogger(__name__)
+            logger.setLevel(logging.INFO)
+            tc = None
+            
+        logger.info("🎂 Application Insights configured successfully")
+    else:
+        logger = logging.getLogger(__name__)
+        logger.setLevel(logging.INFO)
+        tc = None
+        logger.warning("⚠️ Application Insights not configured - no connection string found")
+        
+except ImportError as e:
+    logger = logging.getLogger(__name__)
+    logger.setLevel(logging.INFO)
+    tc = None
+    logger.warning(f"⚠️ Application Insights dependencies not available: {e}")
+
 # Configure logging for better debugging
 logging.basicConfig(level=logging.INFO)
-logger = logging.getLogger(__name__)
 
 # Initialize the Azure Functions app using v2 programming model
 app = func.FunctionApp(http_auth_level=func.AuthLevel.ANONYMOUS)
@@ -19,6 +54,16 @@ def add_cors_headers(response: func.HttpResponse) -> func.HttpResponse:
     response.headers['Access-Control-Allow-Methods'] = 'GET, POST, OPTIONS'
     response.headers['Access-Control-Allow-Headers'] = 'Content-Type, Authorization'
     return response
+
+# Custom logging function that sends to both console and Application Insights
+def log_custom_event(event_name: str, properties: dict = None, measurements: dict = None):
+    """Log custom events to Application Insights"""
+    if tc:
+        tc.track_event(event_name, properties, measurements)
+        tc.flush()
+    
+    # Also log to console for immediate debugging
+    logger.info(f"🎂 CUSTOM EVENT: {event_name} | Properties: {properties} | Measurements: {measurements}")
 
 # ============================================================================
 # SHARED UTILITY FUNCTIONS
@@ -215,56 +260,73 @@ def nextbirthday(req: func.HttpRequest) -> func.HttpResponse:
         JSON response with birthday information or error details
     """
     # Enhanced logging for debugging
-    logger.info('=== Birthday countdown function started ===')
-    logger.info(f'Request method: {req.method}')
-    logger.info(f'Request URL: {req.url}')
-    logger.info(f'Request headers: {dict(req.headers)}')
-    logger.info(f'Request params: {dict(req.params)}')
+    logger.info('🎂 ===== BIRTHDAY COUNTDOWN FUNCTION STARTED =====')
+    logger.info(f'🎂 Request method: {req.method}')
+    logger.info(f'🎂 Request URL: {req.url}')
+    logger.info(f'🎂 Request headers: {dict(req.headers)}')
+    logger.info(f'🎂 Request params: {dict(req.params)}')
+    logger.info(f'🎂 Timestamp: {datetime.now().isoformat()}')
+    
+    # Log custom event to Application Insights
+    log_custom_event('BirthdayCalculationStarted', {
+        'method': req.method,
+        'url': str(req.url),
+        'user_agent': req.headers.get('User-Agent', 'Unknown'),
+        'timestamp': datetime.now().isoformat()
+    })
     
     # Handle CORS preflight requests
     if req.method == "OPTIONS":
-        logger.info('Handling CORS preflight request')
+        logger.info('🎂 Handling CORS preflight request')
+        log_custom_event('CORSPreflightHandled')
         response = func.HttpResponse("", status_code=200)
         return add_cors_headers(response)
     
     try:
         # Get and validate the date of birth parameter
         dob_param = req.params.get('dob')
-        logger.info(f'DOB parameter received: {dob_param}')
+        logger.info(f'🎂 DOB parameter received: {dob_param}')
         
         # Parse and validate the date
         parsed_date, error_message = parse_date_string(dob_param)
         if error_message:
-            logger.warning(f'Date validation failed: {error_message}')
+            logger.warning(f'🎂 Date validation failed: {error_message}')
+            log_custom_event('ValidationError', {
+                'error': error_message,
+                'dob_param': dob_param
+            })
+            
             response = func.HttpResponse(
                 json.dumps({
                     "error": error_message,
                     "example": "/api/nextbirthday?dob=1990-05-15",
                     "received": dob_param,
-                    "timestamp": datetime.now().isoformat()
+                    "timestamp": datetime.now().isoformat(),
+                    "source": "Azure Functions",
+                    "version": "2.3"
                 }),
                 status_code=400,
                 mimetype="application/json"
             )
             return add_cors_headers(response)
         
-        logger.info(f'Date parsed successfully: {parsed_date}')
+        logger.info(f'🎂 Date parsed successfully: {parsed_date}')
         
         # Calculate birthday information
         current_date = date.today()
-        logger.info(f'Current date: {current_date}')
+        logger.info(f'🎂 Current date: {current_date}')
         
         # Calculate current age in complete years
         age_years = calculate_age_years(parsed_date, current_date)
-        logger.info(f'Age calculated: {age_years} years')
+        logger.info(f'🎂 Age calculated: {age_years} years')
         
         # Calculate next birthday date
         next_birthday_date = calculate_next_birthday(parsed_date, current_date)
-        logger.info(f'Next birthday date: {next_birthday_date}')
+        logger.info(f'🎂 Next birthday date: {next_birthday_date}')
         
         # Calculate days until next birthday
         days_until_next_birthday = (next_birthday_date - current_date).days
-        logger.info(f'Days until next birthday: {days_until_next_birthday}')
+        logger.info(f'🎂 Days until next birthday: {days_until_next_birthday}')
         
         # Get day of week for next birthday
         next_birthday_day_of_week = next_birthday_date.strftime('%A')
@@ -285,24 +347,45 @@ def nextbirthday(req: func.HttpRequest) -> func.HttpResponse:
                 "parsedDate": parsed_date.strftime('%Y-%m-%d'),
                 "currentDate": current_date.strftime('%Y-%m-%d'),
                 "environment": "Azure Functions",
-                "version": "2.2"
+                "version": "2.3",
+                "applicationInsights": "enabled" if tc else "disabled"
             }
         }
         
-        logger.info(f'Successfully calculated birthday for {dob_param}')
-        logger.info(f'Response data: {json.dumps(response_data, indent=2)}')
+        logger.info(f'🎂 Successfully calculated birthday for {dob_param}')
+        logger.info(f'🎂 Response data: {json.dumps(response_data, indent=2)}')
+        
+        # Log success event to Application Insights
+        log_custom_event('BirthdayCalculationSuccess', {
+            'dob': dob_param,
+            'age_years': age_years,
+            'days_until_birthday': days_until_next_birthday
+        }, {
+            'age_years': age_years,
+            'days_until_birthday': days_until_next_birthday
+        })
         
         response = func.HttpResponse(
             json.dumps(response_data),
             status_code=200,
             mimetype="application/json"
         )
+        
+        logger.info('🎂 ===== BIRTHDAY COUNTDOWN FUNCTION COMPLETED SUCCESSFULLY =====')
         return add_cors_headers(response)
         
     except Exception as e:
-        logger.error(f'CRITICAL ERROR in birthday countdown function: {str(e)}', exc_info=True)
-        logger.error(f'Error type: {type(e).__name__}')
-        logger.error(f'Error args: {e.args}')
+        logger.error(f'🎂 CRITICAL ERROR in birthday countdown function: {str(e)}', exc_info=True)
+        logger.error(f'🎂 Error type: {type(e).__name__}')
+        logger.error(f'🎂 Error args: {e.args}')
+        
+        # Log error event to Application Insights
+        log_custom_event('BirthdayCalculationError', {
+            'error': str(e),
+            'error_type': type(e).__name__,
+            'dob_param': req.params.get('dob', 'None'),
+            'request_url': str(req.url)
+        })
         
         response = func.HttpResponse(
             json.dumps({
@@ -312,12 +395,15 @@ def nextbirthday(req: func.HttpRequest) -> func.HttpResponse:
                 "timestamp": datetime.now().isoformat(),
                 "debug": {
                     "environment": "Azure Functions",
-                    "version": "2.2",
+                    "version": "2.3",
                     "requestMethod": req.method,
-                    "requestUrl": str(req.url)
+                    "requestUrl": str(req.url),
+                    "applicationInsights": "enabled" if tc else "disabled"
                 }
             }),
             status_code=500,
             mimetype="application/json"
         )
+        
+        logger.error('🎂 ===== BIRTHDAY COUNTDOWN FUNCTION COMPLETED WITH ERROR =====')
         return add_cors_headers(response)
