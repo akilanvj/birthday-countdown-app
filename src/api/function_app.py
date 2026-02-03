@@ -3,9 +3,22 @@ import logging
 import json
 from datetime import datetime, date, timedelta
 import re
+import os
+
+# Configure logging for better debugging
+logging.basicConfig(level=logging.INFO)
+logger = logging.getLogger(__name__)
 
 # Initialize the Azure Functions app using v2 programming model
 app = func.FunctionApp(http_auth_level=func.AuthLevel.ANONYMOUS)
+
+# Add CORS headers for all responses
+def add_cors_headers(response: func.HttpResponse) -> func.HttpResponse:
+    """Add CORS headers to allow frontend access"""
+    response.headers['Access-Control-Allow-Origin'] = '*'
+    response.headers['Access-Control-Allow-Methods'] = 'GET, POST, OPTIONS'
+    response.headers['Access-Control-Allow-Headers'] = 'Content-Type, Authorization'
+    return response
 
 # ============================================================================
 # SHARED UTILITY FUNCTIONS
@@ -186,7 +199,7 @@ def generate_birthday_message(days_until: int) -> str:
         return f"📅 Your birthday is in {days_until} days. Plenty of time to prepare!"
 
 
-@app.route(route="nextbirthday", methods=["GET"])
+@app.route(route="nextbirthday", methods=["GET", "OPTIONS"])
 def nextbirthday(req: func.HttpRequest) -> func.HttpResponse:
     """
     HTTP trigger function for birthday countdown calculations.
@@ -201,35 +214,57 @@ def nextbirthday(req: func.HttpRequest) -> func.HttpResponse:
     Returns:
         JSON response with birthday information or error details
     """
-    logging.info('Birthday countdown function processed a request.')
+    # Enhanced logging for debugging
+    logger.info('=== Birthday countdown function started ===')
+    logger.info(f'Request method: {req.method}')
+    logger.info(f'Request URL: {req.url}')
+    logger.info(f'Request headers: {dict(req.headers)}')
+    logger.info(f'Request params: {dict(req.params)}')
+    
+    # Handle CORS preflight requests
+    if req.method == "OPTIONS":
+        logger.info('Handling CORS preflight request')
+        response = func.HttpResponse("", status_code=200)
+        return add_cors_headers(response)
     
     try:
         # Get and validate the date of birth parameter
         dob_param = req.params.get('dob')
+        logger.info(f'DOB parameter received: {dob_param}')
         
         # Parse and validate the date
         parsed_date, error_message = parse_date_string(dob_param)
         if error_message:
-            return func.HttpResponse(
+            logger.warning(f'Date validation failed: {error_message}')
+            response = func.HttpResponse(
                 json.dumps({
                     "error": error_message,
-                    "example": "/api/nextbirthday?dob=1990-05-15"
+                    "example": "/api/nextbirthday?dob=1990-05-15",
+                    "received": dob_param,
+                    "timestamp": datetime.now().isoformat()
                 }),
                 status_code=400,
                 mimetype="application/json"
             )
+            return add_cors_headers(response)
+        
+        logger.info(f'Date parsed successfully: {parsed_date}')
         
         # Calculate birthday information
         current_date = date.today()
+        logger.info(f'Current date: {current_date}')
         
         # Calculate current age in complete years
         age_years = calculate_age_years(parsed_date, current_date)
+        logger.info(f'Age calculated: {age_years} years')
         
         # Calculate next birthday date
         next_birthday_date = calculate_next_birthday(parsed_date, current_date)
+        logger.info(f'Next birthday date: {next_birthday_date}')
         
         # Calculate days until next birthday
         days_until_next_birthday = (next_birthday_date - current_date).days
+        logger.info(f'Days until next birthday: {days_until_next_birthday}')
         
         # Get day of week for next birthday
         next_birthday_day_of_week = next_birthday_date.strftime('%A')
@@ -244,24 +279,45 @@ def nextbirthday(req: func.HttpRequest) -> func.HttpResponse:
             "nextBirthdayDate": next_birthday_date.strftime('%Y-%m-%d'),
             "nextBirthdayDayOfWeek": next_birthday_day_of_week,
             "daysUntilNextBirthday": days_until_next_birthday,
-            "message": message
+            "message": message,
+            "timestamp": datetime.now().isoformat(),
+            "debug": {
+                "parsedDate": parsed_date.strftime('%Y-%m-%d'),
+                "currentDate": current_date.strftime('%Y-%m-%d'),
+                "environment": "Azure Functions",
+                "version": "2.2"
+            }
         }
         
-        logging.info(f'Successfully calculated birthday for {dob_param}')
+        logger.info(f'Successfully calculated birthday for {dob_param}')
+        logger.info(f'Response data: {json.dumps(response_data, indent=2)}')
         
-        return func.HttpResponse(
+        response = func.HttpResponse(
             json.dumps(response_data),
             status_code=200,
             mimetype="application/json"
         )
+        return add_cors_headers(response)
         
     except Exception as e:
-        logging.error(f'Error in birthday countdown function: {str(e)}')
-        return func.HttpResponse(
+        logger.error(f'CRITICAL ERROR in birthday countdown function: {str(e)}', exc_info=True)
+        logger.error(f'Error type: {type(e).__name__}')
+        logger.error(f'Error args: {e.args}')
+        
+        response = func.HttpResponse(
             json.dumps({
                 "error": f"Internal server error: {str(e)}",
-                "example": "/api/nextbirthday?dob=1990-05-15"
+                "errorType": type(e).__name__,
+                "example": "/api/nextbirthday?dob=1990-05-15",
+                "timestamp": datetime.now().isoformat(),
+                "debug": {
+                    "environment": "Azure Functions",
+                    "version": "2.2",
+                    "requestMethod": req.method,
+                    "requestUrl": str(req.url)
+                }
             }),
             status_code=500,
             mimetype="application/json"
         )
+        return add_cors_headers(response)

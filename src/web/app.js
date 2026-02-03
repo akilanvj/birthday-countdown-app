@@ -1,3 +1,35 @@
+// Enhanced logging configuration
+const LOGGING = {
+    enabled: true,
+    level: 'DEBUG', // DEBUG, INFO, WARN, ERROR
+    prefix: '🎂 Birthday App'
+};
+
+// Enhanced logging functions
+function logDebug(...args) {
+    if (LOGGING.enabled && ['DEBUG'].includes(LOGGING.level)) {
+        console.log(`${LOGGING.prefix} [DEBUG]`, ...args);
+    }
+}
+
+function logInfo(...args) {
+    if (LOGGING.enabled && ['DEBUG', 'INFO'].includes(LOGGING.level)) {
+        console.log(`${LOGGING.prefix} [INFO]`, ...args);
+    }
+}
+
+function logWarn(...args) {
+    if (LOGGING.enabled && ['DEBUG', 'INFO', 'WARN'].includes(LOGGING.level)) {
+        console.warn(`${LOGGING.prefix} [WARN]`, ...args);
+    }
+}
+
+function logError(...args) {
+    if (LOGGING.enabled) {
+        console.error(`${LOGGING.prefix} [ERROR]`, ...args);
+    }
+}
+
 // Configuration
 const CONFIG = {
     // Try multiple API endpoints in order of preference
@@ -14,7 +46,11 @@ const CONFIG = {
 };
 
 // Deployment info for debugging
-console.log('🎂 Birthday Countdown App v2.2 - API Integration Fix:', new Date().toISOString());
+logInfo('Birthday Countdown App v2.3 - Enhanced Logging:', new Date().toISOString());
+logInfo('Environment:', window.location.hostname.includes('localhost') ? 'LOCAL' : 'AZURE');
+logInfo('Hostname:', window.location.hostname);
+logInfo('Full URL:', window.location.href);
+logInfo('API Configuration:', CONFIG);
 console.log('🌍 Environment:', window.location.hostname.includes('localhost') ? 'LOCAL' : 'AZURE');
 console.log('🔗 API URL:', CONFIG.API_BASE_URL);
 
@@ -37,9 +73,12 @@ const elements = {
 
 // Initialize the application
 function init() {
+    logInfo('=== Initializing Birthday Countdown App ===');
+    
     // Set max date to today to prevent future dates
     const today = new Date().toISOString().split('T')[0];
     elements.dobInput.setAttribute('max', today);
+    logDebug('Set max date to:', today);
     
     // Add event listeners
     elements.form.addEventListener('submit', handleFormSubmit);
@@ -47,23 +86,36 @@ function init() {
     
     // Ensure date input works properly
     elements.dobInput.addEventListener('focus', function() {
+        logDebug('Date input focused');
         // Force the date picker to show
         this.showPicker && this.showPicker();
     });
     
-    console.log('Next Birthday Countdown app initialized');
+    logInfo('Birthday Countdown app initialized successfully');
+    logInfo('DOM elements found:', {
+        form: !!elements.form,
+        dobInput: !!elements.dobInput,
+        errorMessage: !!elements.errorMessage,
+        results: !!elements.results,
+        loading: !!elements.loading
+    });
 }
 
 // Handle form submission
 async function handleFormSubmit(event) {
     event.preventDefault();
     
+    logInfo('=== Form submission started ===');
     const dob = elements.dobInput.value.trim();
+    logInfo('Form DOB value:', dob);
     
     // Client-side validation
     if (!validateInput(dob)) {
+        logWarn('Client-side validation failed');
         return;
     }
+    
+    logInfo('Client-side validation passed');
     
     // Show loading state
     showLoading();
@@ -71,19 +123,23 @@ async function handleFormSubmit(event) {
     try {
         // Use the formatted date for API call
         const formattedDate = elements.dobInput.dataset.formattedDate || dob;
+        logInfo('Using formatted date for API:', formattedDate);
         
         // Make API call
         const result = await callBirthdayAPI(formattedDate);
         
         // Display results
+        logInfo('Displaying results');
         displayResults(result);
         
     } catch (error) {
         // Handle errors
+        logError('Form submission error:', error);
         displayError(error.message);
     } finally {
         // Hide loading state
         hideLoading();
+        logInfo('=== Form submission completed ===');
     }
 }
 
@@ -167,10 +223,16 @@ function validateInput(dob) {
 
 // Call the birthday API with fallback support
 async function callBirthdayAPI(dob) {
+    logInfo('=== Starting API call ===');
+    logInfo('DOB parameter:', dob);
+    logInfo('User Agent:', navigator.userAgent);
+    logInfo('Current timestamp:', new Date().toISOString());
+    
     let lastError = null;
     
     // For localhost, use the configured URL directly
     if (window.location.hostname.includes('localhost')) {
+        logInfo('Using localhost configuration');
         return await makeAPIRequest(CONFIG.API_BASE_URL, dob);
     }
     
@@ -180,60 +242,111 @@ async function callBirthdayAPI(dob) {
         'https://funchttptrigger1-fvbnfye7bac5bgd5.eastus-01.azurewebsites.net/api/nextbirthday'  // External Functions
     ];
     
-    for (const endpoint of endpoints) {
+    logInfo('Production environment detected, trying multiple endpoints:', endpoints);
+    
+    for (let i = 0; i < endpoints.length; i++) {
+        const endpoint = endpoints[i];
         try {
-            console.log(`🔄 Trying API endpoint: ${endpoint}`);
+            logInfo(`🔄 Attempt ${i + 1}/${endpoints.length}: Trying endpoint: ${endpoint}`);
+            const startTime = performance.now();
+            
             const result = await makeAPIRequest(endpoint, dob);
-            console.log(`✅ Success with endpoint: ${endpoint}`);
+            
+            const endTime = performance.now();
+            const duration = Math.round(endTime - startTime);
+            
+            logInfo(`✅ SUCCESS with endpoint: ${endpoint} (${duration}ms)`);
+            logInfo('API Response:', result);
             return result;
+            
         } catch (error) {
-            console.log(`❌ Failed with endpoint ${endpoint}:`, error.message);
+            const endTime = performance.now();
+            logError(`❌ FAILED with endpoint ${endpoint}:`, {
+                error: error.message,
+                stack: error.stack,
+                endpoint: endpoint,
+                attempt: i + 1
+            });
             lastError = error;
             continue;
         }
     }
     
     // If all endpoints failed, throw the last error
+    logError('🚨 ALL ENDPOINTS FAILED');
+    logError('Last error:', lastError);
     throw lastError || new Error('All API endpoints failed');
 }
 
 // Make API request to a specific endpoint
 async function makeAPIRequest(baseUrl, dob) {
     const url = `${baseUrl}?dob=${encodeURIComponent(dob)}`;
+    logDebug('Making request to:', url);
+    
+    const requestOptions = {
+        method: 'GET',
+        headers: {
+            'Accept': 'application/json',
+            'Content-Type': 'application/json'
+        }
+    };
+    
+    logDebug('Request options:', requestOptions);
     
     try {
-        const response = await fetch(url, {
-            method: 'GET',
-            headers: {
-                'Accept': 'application/json',
-                'Content-Type': 'application/json'
-            }
+        logDebug('Initiating fetch request...');
+        const response = await fetch(url, requestOptions);
+        
+        logDebug('Response received:', {
+            status: response.status,
+            statusText: response.statusText,
+            headers: Object.fromEntries(response.headers.entries()),
+            url: response.url
         });
         
-        const data = await response.json();
+        let data;
+        try {
+            data = await response.json();
+            logDebug('Response data parsed:', data);
+        } catch (parseError) {
+            logError('Failed to parse JSON response:', parseError);
+            const textResponse = await response.text();
+            logError('Raw response text:', textResponse);
+            throw new Error(`Invalid JSON response: ${parseError.message}`);
+        }
         
         // Handle API error responses
         if (!response.ok) {
+            logWarn('API returned error status:', response.status);
             if (data.error) {
                 throw new Error(data.error);
             } else {
-                throw new Error(`API request failed with status ${response.status}`);
+                throw new Error(`API request failed with status ${response.status}: ${response.statusText}`);
             }
         }
         
         // Validate response structure
         if (!isValidResponse(data)) {
+            logError('Invalid response structure:', data);
             throw new Error('Invalid response format from API');
         }
         
+        logInfo('API request successful');
         return data;
         
     } catch (error) {
+        logError('API request failed:', {
+            error: error.message,
+            stack: error.stack,
+            url: url,
+            type: error.name
+        });
+        
         // Handle network errors and other exceptions
         if (error.name === 'TypeError' && error.message.includes('fetch')) {
-            throw new Error('Unable to connect to the birthday service. Please check your internet connection and try again.');
+            throw new Error('Network error: Unable to connect to the birthday service. Please check your internet connection and try again.');
         } else if (error.message.includes('CORS')) {
-            throw new Error('Unable to connect to the birthday service due to CORS policy. Please check the server configuration.');
+            throw new Error('CORS error: Unable to connect to the birthday service due to cross-origin policy. Please check the server configuration.');
         } else {
             throw error;
         }
