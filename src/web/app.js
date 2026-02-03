@@ -159,7 +159,7 @@ function validateInput(dob) {
     if (dob.includes('/')) {
         const parts = dob.split('/');
         if (parts.length === 3) {
-            // Assume DD/MM/YYYY format (as shown in the UI)
+            // DD/MM/YYYY format - keep as DD/MM/YYYY for the API
             const day = parts[0].padStart(2, '0');
             const month = parts[1].padStart(2, '0');
             const year = parts[2];
@@ -190,6 +190,9 @@ function validateInput(dob) {
                 displayError('Please enter a valid year (YYYY or YY format).');
                 return false;
             }
+            
+            // Create test date using DD/MM/YYYY format
+            testDate = new Date(year, month - 1, day); // Month is 0-indexed in JS Date
         } else {
             displayError('Please enter date in DD/MM/YYYY format.');
             return false;
@@ -201,9 +204,11 @@ function validateInput(dob) {
             if (parts[0].length === 4) {
                 // YYYY-MM-DD format, keep as is
                 formattedDate = dob;
+                testDate = new Date(formattedDate);
             } else {
                 // DD-MM-YYYY format, convert to DD/MM/YYYY
                 formattedDate = `${parts[0]}/${parts[1]}/${parts[2]}`;
+                testDate = new Date(parts[2], parts[1] - 1, parts[0]);
             }
         } else {
             displayError('Please enter date in DD/MM/YYYY format.');
@@ -214,17 +219,7 @@ function validateInput(dob) {
         return false;
     }
     
-    // Validate the formatted date by creating a test date
-    let testDate;
-    if (formattedDate.includes('/')) {
-        const parts = formattedDate.split('/');
-        // DD/MM/YYYY format
-        testDate = new Date(parts[2], parts[1] - 1, parts[0]); // Month is 0-indexed in JS Date
-    } else {
-        // YYYY-MM-DD format
-        testDate = new Date(formattedDate);
-    }
-    
+    // Validate the test date
     const today = new Date();
     
     // Check if date is valid
