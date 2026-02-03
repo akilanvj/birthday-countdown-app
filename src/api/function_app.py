@@ -92,9 +92,10 @@ def calculate_age_years(birth_date: date, current_date: date) -> int:
 def parse_date_string(date_str: str) -> tuple:
     """
     Parse and validate a date string.
+    Supports both YYYY-MM-DD and DD/MM/YYYY formats.
     
     Args:
-        date_str: Date string in YYYY-MM-DD format
+        date_str: Date string in YYYY-MM-DD or DD/MM/YYYY format
         
     Returns:
         tuple: (parsed_date, error_message) - error_message is None if successful
@@ -102,19 +103,41 @@ def parse_date_string(date_str: str) -> tuple:
     if not date_str:
         return None, "Missing date parameter"
     
-    # Validate format using regex
-    if not re.match(r'^\d{4}-\d{2}-\d{2}$', date_str):
-        return None, "Invalid date format. Expected YYYY-MM-DD"
+    parsed_date = None
     
-    try:
-        parsed_date = datetime.strptime(date_str, '%Y-%m-%d').date()
-    except ValueError:
-        return None, "Invalid date. Please provide a valid date"
+    # Try YYYY-MM-DD format first (ISO format)
+    if re.match(r'^\d{4}-\d{2}-\d{2}$', date_str):
+        try:
+            parsed_date = datetime.strptime(date_str, '%Y-%m-%d').date()
+        except ValueError:
+            return None, "Invalid date. Please provide a valid date in YYYY-MM-DD format"
+    
+    # Try DD/MM/YYYY format (European/UK format)
+    elif re.match(r'^\d{1,2}/\d{1,2}/\d{4}$', date_str):
+        try:
+            parsed_date = datetime.strptime(date_str, '%d/%m/%Y').date()
+        except ValueError:
+            return None, "Invalid date. Please provide a valid date in DD/MM/YYYY format"
+    
+    # Try DD-MM-YYYY format (alternative European format)
+    elif re.match(r'^\d{1,2}-\d{1,2}-\d{4}$', date_str):
+        try:
+            parsed_date = datetime.strptime(date_str, '%d-%m-%Y').date()
+        except ValueError:
+            return None, "Invalid date. Please provide a valid date in DD-MM-YYYY format"
+    
+    else:
+        return None, "Invalid date format. Expected DD/MM/YYYY or YYYY-MM-DD format"
     
     # Check if date is in the future
     current_date = date.today()
     if parsed_date > current_date:
         return None, "Date of birth cannot be in the future"
+    
+    # Check if date is not too far in the past (reasonable validation)
+    min_year = current_date.year - 150
+    if parsed_date.year < min_year:
+        return None, f"Please enter a date after {min_year}"
     
     return parsed_date, None
 
@@ -299,7 +322,7 @@ def nextbirthday(req: func.HttpRequest) -> func.HttpResponse:
             response = func.HttpResponse(
                 json.dumps({
                     "error": error_message,
-                    "example": "/api/nextbirthday?dob=1990-05-15",
+                    "example": "/api/nextbirthday?dob=12/06/2000 or /api/nextbirthday?dob=1990-05-15",
                     "received": dob_param,
                     "timestamp": datetime.now().isoformat(),
                     "source": "Azure Functions",
@@ -391,7 +414,7 @@ def nextbirthday(req: func.HttpRequest) -> func.HttpResponse:
             json.dumps({
                 "error": f"Internal server error: {str(e)}",
                 "errorType": type(e).__name__,
-                "example": "/api/nextbirthday?dob=1990-05-15",
+                "example": "/api/nextbirthday?dob=12/06/2000 or /api/nextbirthday?dob=1990-05-15",
                 "timestamp": datetime.now().isoformat(),
                 "debug": {
                     "environment": "Azure Functions",

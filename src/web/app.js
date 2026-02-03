@@ -46,7 +46,7 @@ const CONFIG = {
 };
 
 // Deployment info for debugging
-logInfo('Birthday Countdown App v2.4 - CI/CD Test & Application Insights Ready:', new Date().toISOString());
+logInfo('Birthday Countdown App - Enhanced Logging:', new Date().toISOString());
 logInfo('Environment:', window.location.hostname.includes('localhost') ? 'LOCAL' : 'AZURE');
 logInfo('Hostname:', window.location.hostname);
 logInfo('Full URL:', window.location.href);
@@ -153,26 +153,39 @@ function validateInput(dob) {
         return false;
     }
     
-    // Convert DD/MM/YYYY to YYYY-MM-DD format for API
     let formattedDate = dob;
     
-    // Handle different date formats
+    // Handle different date formats - prioritize DD/MM/YYYY as shown in UI
     if (dob.includes('/')) {
         const parts = dob.split('/');
         if (parts.length === 3) {
-            // Assume DD/MM/YYYY format (European style)
+            // Assume DD/MM/YYYY format (as shown in the UI)
             const day = parts[0].padStart(2, '0');
             const month = parts[1].padStart(2, '0');
             const year = parts[2];
+            
+            // Validate day and month ranges
+            const dayNum = parseInt(day);
+            const monthNum = parseInt(month);
+            
+            if (dayNum < 1 || dayNum > 31) {
+                displayError('Please enter a valid day (1-31).');
+                return false;
+            }
+            
+            if (monthNum < 1 || monthNum > 12) {
+                displayError('Please enter a valid month (1-12).');
+                return false;
+            }
             
             // Validate year length
             if (year.length === 2) {
                 // Convert 2-digit year to 4-digit (assume 1900s for years > 50, 2000s for years <= 50)
                 const currentYear = new Date().getFullYear();
                 const century = parseInt(year) > 50 ? 1900 : 2000;
-                formattedDate = `${century + parseInt(year)}-${month}-${day}`;
+                formattedDate = `${day}/${month}/${century + parseInt(year)}`;
             } else if (year.length === 4) {
-                formattedDate = `${year}-${month}-${day}`;
+                formattedDate = `${day}/${month}/${year}`;
             } else {
                 displayError('Please enter a valid year (YYYY or YY format).');
                 return false;
@@ -182,25 +195,46 @@ function validateInput(dob) {
             return false;
         }
     } else if (dob.includes('-')) {
-        // Already in YYYY-MM-DD format, keep as is
-        formattedDate = dob;
+        // Handle DD-MM-YYYY or YYYY-MM-DD format
+        const parts = dob.split('-');
+        if (parts.length === 3) {
+            if (parts[0].length === 4) {
+                // YYYY-MM-DD format, keep as is
+                formattedDate = dob;
+            } else {
+                // DD-MM-YYYY format, convert to DD/MM/YYYY
+                formattedDate = `${parts[0]}/${parts[1]}/${parts[2]}`;
+            }
+        } else {
+            displayError('Please enter date in DD/MM/YYYY format.');
+            return false;
+        }
     } else {
         displayError('Please enter date in DD/MM/YYYY format or use the date picker.');
         return false;
     }
     
-    // Validate the formatted date
-    const dobDate = new Date(formattedDate);
+    // Validate the formatted date by creating a test date
+    let testDate;
+    if (formattedDate.includes('/')) {
+        const parts = formattedDate.split('/');
+        // DD/MM/YYYY format
+        testDate = new Date(parts[2], parts[1] - 1, parts[0]); // Month is 0-indexed in JS Date
+    } else {
+        // YYYY-MM-DD format
+        testDate = new Date(formattedDate);
+    }
+    
     const today = new Date();
     
     // Check if date is valid
-    if (isNaN(dobDate.getTime())) {
+    if (isNaN(testDate.getTime())) {
         displayError('Please enter a valid date. Use DD/MM/YYYY format (e.g., 12/06/2000).');
         return false;
     }
     
     // Check if date is not in the future
-    if (dobDate > today) {
+    if (testDate > today) {
         displayError('Date of birth cannot be in the future.');
         return false;
     }
@@ -210,7 +244,7 @@ function validateInput(dob) {
     const minDate = new Date();
     minDate.setFullYear(minDate.getFullYear() - maxAge);
     
-    if (dobDate < minDate) {
+    if (testDate < minDate) {
         displayError('Please enter a more recent date of birth.');
         return false;
     }
